@@ -7,25 +7,45 @@
     <title>Document</title>
     <style>
         #chat {
-            width: 400px;
+            width: 30%;
             margin: 15px auto;
             padding: 20px;
         }
 
-        .info_output {
-            font-style: italic;
+        .chat_input {
+            display: flex;
+            justify-content: space-between;                        
+        }
+
+        .chat_input input {
+            padding: 5px 10px;
+            width: 50%;
+        }
+
+        .btn {
+            cursor: pointer;
+            border: none;
+            border-radius: 3px;
+            padding: 7px 10px;
+            background: lightblue;           
+            transition: 0.3s;
+        }
+        
+        .btn:hover {
+            box-shadow: 0px 2px 8px 2px lightblue;  
+            transform: scale(1.05);
         }
 
         .chat_output {
-            margin: 20px 0;
-            border: 2px solid lightblue;
+            margin: 15px 0;
             padding: 10px;
+            border: 2px solid lightblue;             
             height: 150px;
             overflow-y: scroll;
             position: relative;
             display: flex;
-            flex-wrap: nowrap;
             flex-direction: column;
+            flex-wrap: nowrap;            
         }
 
         .chat_output > div {
@@ -33,27 +53,21 @@
             padding: 5px 10px;
             margin: 5px 0;
             border-radius: 3px;
-            border: 2px solid lightblue;
+            border: 2px solid lightblue;  
         }
 
         .chat_output .received {            
             align-self: flex-start;
+            background-color: #C5E7F3;
         }
 
         .chat_output .sent {           
             align-self: flex-end;
+            background-color: #C7F6D7;
         }
 
-        .chat_input input {
-            padding: 5px 10px;
-        }
-
-        .btn {
-            padding: 7px 10px;
-            background: lightblue;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
+        .info_output {
+            font-style: italic;
         }
     </style>
         
@@ -71,65 +85,61 @@
     <script>
         const wsUri = "wss://echo-ws-service.herokuapp.com"; // URI эхо-сервера
 
-        function pageLoaded() { // Функция-обработчик события загрузки страницы
-            const infoOutput = document.querySelector(".info_output"); // Div для информационных сообщений о состоянии Websocket-соединения
-            const chatOutput = document.querySelector(".chat_output"); // Окно чата для сообщений
-            const input = document.querySelector("input"); // Input для ввода сообщения
-            const sendBtn = document.querySelector(".btn_send"); // Кнопка для отправки сообщения
-            const geoBtn =  document.querySelector(".btn_geo"); // Кнопка для отправки геолокации
+        const pageLoaded = () => { // функция-обработчик события загрузки страницы
+            const infoOutput = document.querySelector(".info_output"); // div для информационных сообщений о состоянии Websocket-соединения
+            const chatOutput = document.querySelector(".chat_output"); // окно чата для сообщений
+            const input = document.querySelector("input"); // input для ввода сообщения
+            const sendBtn = document.querySelector(".btn_send"); // кнопка для отправки сообщения
+            const geoBtn =  document.querySelector(".btn_geo"); // кнопка для отправки геолокации
 
-            let socket = new WebSocket(wsUri); // Создаем экземпляр класса WebSocket
+            let socket = new WebSocket(wsUri); // создать экземпляр класса WebSocket
 
-            socket.onopen = () => { // Обработчик открытия Websocket-соединения
+            socket.onopen = () => { // обработчик открытия Websocket-соединения
                 infoOutput.innerText = "Соединение установлено";        
             };
 
-            socket.onmessage = (event) => { // Обработчик получения сообщения от сервера
+            socket.onmessage = (event) => { // обработчик получения сообщения от сервера
                 writeToChat(event.data, true);                                
             };
 
-            socket.onerror = () => { // Обработчик ошибки передачи данных по Websocket-соединению
+            socket.onerror = () => { // обработчик ошибки передачи данных по websocket-соединению
                 infoOutput.innerText = "При передаче данных произошла ошибка";
             };
 
-            sendBtn.addEventListener("click", sentMessage); 
+            sendBtn.addEventListener("click", sendMessage); 
 
-            function sentMessage() { // Обработчик нажатия кнопки "Отправить"
-                if (!input.value) return; // Если пользователь ничего не ввел, - выйти из функции
-                socket.send(input.value); // Отправляем сообщение по WebSocket-соединению
-                writeToChat(input.value, false); // Добавляем отправленное сообщение в чат
-                input.value = ""; // Очищаем input
+            function sendMessage() { // обработчик нажатия кнопки "Отправить"
+                if (!input.value) return; // если пользователь ничего не ввел, - выйти из функции
+                socket.send(input.value); // отправить сообщение по webSocket-соединению
+                writeToChat(input.value, false); // добавить отправленное сообщение в чат
+                input.value = ""; // очистить input
             };
 
-            function writeToChat(message, isReceived) { // Функция для вывода сообщения в чат
-                let messageHTML = `<div class="${isReceived? "received" : "sent"}">${message}</div>`; // Полученным сообщениям добавляется класс received, а отправленным - класс sent
-                chatOutput.innerHTML += messageHTML; // Добавляем сообщение в чат
+            function writeToChat(message, isReceived) { // функция для вывода сообщения в чат: полученным сообщениям добавить класс received, отправленным - класс sent, затем добавить сообщение в чат
+                let messageHTML = `<div class="${isReceived ? "received" : "sent"}">${message}</div>`; 
+                chatOutput.innerHTML += messageHTML; 
             };
-
             
-            geoBtn.addEventListener("click", geoFunction); // Добавляем возможность отправки геолокации
+            geoBtn.addEventListener("click", geoFunction); // добавить возможность отправки геолокации
 
-            function geoFunction() { // Обработчик нажатия кнопки для отправки геолокации
-                if (!("geolocation" in navigator)) { // Проверяем, поддерживает ли браузер геолокацию
-                    console.log("Браузер не поддерживает геолокацию."); // Если не поддерживает, - выводим в консоль сообщение
-                } else { // Если  поддерживает
-                    navigator.geolocation.getCurrentPosition(locationSuccess, locationError); // Вызываем метод getCurrentPosition
+            function geoFunction() { // обработчик нажатия кнопки для отправки геолокации
+                if (!("geolocation" in navigator)) { // проверить, поддерживает ли браузер геолокацию
+                    console.log("Браузер не поддерживает геолокацию."); // если не поддерживает, - вывести в консоль сообщение
+                } else { // если  поддерживает
+                    navigator.geolocation.getCurrentPosition(locationSuccess, locationError); // вызвать метод getCurrentPosition
                     
-                    function locationSuccess(data) { // Функция-колбэк для успешного определения местоположения
-                        let latitude = data.coords.latitude; // Получаем широту
-                        let longitude = data.coords.longitude; // Получаем долготу
-                        let geoMessage = `<a href="https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=6/${latitude}/${longitude}" target="_blank">Геолокация</a>`; // Формируем сообщение с ссылкой на геолокацию и меткой на карте
-                        writeToChat(geoMessage, false); // Добавляем сообщение в чат
+                    function locationSuccess(data) { // колбэк для успешного определения местоположения: получить широту и долготу, сформировать сообщение с ссылкой на геолокацию и меткой на карте и добавить его в чат
+                        let latitude = data.coords.latitude; 
+                        let longitude = data.coords.longitude; 
+                        let geoMessage = `<a href="https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=6/${latitude}/${longitude}" target="_blank">Геолокация</a>`; 
+                        writeToChat(geoMessage, false); 
                     };
 
-                    function locationError() { // Функция-колбэк для ошибки определения местоположения
-                        console.log("Ошибка определения местоположения."); // В случае ошибки выводим в консоль сообщение
-                    };
-                    
-                                                            
+                    function locationError() { // колбэк для ошибки определения местоположения: вывести в консоль сообщение
+                        console.log("Ошибка определения местоположения."); 
+                    };                               
                 }
             }
-
         };        
 
         document.addEventListener("DOMContentLoaded", pageLoaded);
